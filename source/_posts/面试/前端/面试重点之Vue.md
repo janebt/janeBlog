@@ -14,7 +14,7 @@ toc: true
 为自己加个TODO：
 
 - 阅读源码，实现一套双向绑定和渲染。
-- 补充本文的一些细节+渲染+Vuex部分，写的很粗，其实是自己不懂乱copy
+- 补充本文的一些细节+渲染+Vuex部分，写的很乱，其实是自己不懂乱copy
 
 面试的框架部分，需要掌握以下：
 
@@ -25,9 +25,147 @@ toc: true
 
 # 面试重点之Vue
 
-[TOC]
+## Vue通信
 
-## Vue的双向数据绑定原理是什么？
+### vue父子组件通信
+
+#### 子 -> 父：$emit
+
+```vue
+// 父组件
+<single-address @edit-address="editAddress"></single-address>
+
+// 子组件
+methods: {
+ editAddress () {
+  this.$emit('edit-address', false)
+ }
+}
+```
+
+#### 父 -> 子：props
+
+```javascript
+// 父组件
+<one-address :addressitems="addressitems"></one-address>
+
+// 子组件
+<div>{{ addressitems.partment }}{{ addressitems.address }}</div>
+export default {
+  props: {
+    addressitems: Object
+  }
+}
+```
+
+### 非父子组件
+
+```javascript
+var bus = new Vue()
+// 触发组件 A 中的事件
+bus.$emit('id-selected', 1)
+// 在组件 B 创建的钩子中监听事件
+bus.$on('id-selected', function (id) {
+ console.log(id)
+})
+```
+
+
+
+## 事件处理
+
+Methods 并不是创建自定义函数的唯一方式。也可以使用 `watch` 。
+
+两者的区别是 methods 适合小的、同步的计算，而 `watch` 对于多任务、异步或者响应数据变化时的开销大的操作是有利的。我经常在动画中使用 watch 。
+
+
+
+## 组件，Props，Slots
+
+从父组件向子组件传递数据的方式称为 **props**。
+
+我们也可以向 props 中添加验证，这和 React 中的 `PropTypes` 类似。
+
+### Slots
+
+重用组件，并用相同的数据或功能填充它们
+
+你也可以使用具名 slot 。如果一个组件中有两个 slot， 可以通过添加 name 属性区分它们
+
+
+
+## vue生命周期
+
+### 1.什么是vue生命周期？
+
+答： Vue 实例从创建到销毁的过程，就是生命周期。也就是从开始创建、初始化数据、编译模板、挂载Dom→渲染、更新→渲染、卸载等一系列过程，我们称这是 Vue 的生命周期。2、vue生命周期的作用是什么？
+答：它的生命周期中有多个事件钩子，让我们在控制整个Vue实例的过程时更容易形成好的逻辑。
+
+### 2. vue生命周期总共有几个阶段？
+
+答：它可以总共分为8个阶段：创建前/后, 载入前/后,更新前/后,销毁前/销毁后
+
+### 3. 第一次页面加载会触发哪几个钩子？
+
+答：第一次页面加载时会触发 beforeCreate, created, beforeMount, mounted 这几个钩子
+
+### 4. DOM 渲染在 哪个周期中就已经完成？
+
+答：DOM 渲染在 mounted 中就已经完成了。
+
+### 5. 简单描述每个周期具体适合哪些场景？
+
+答：生命周期钩子的一些使用方法： beforecreate : 可以在这加个loading事件，在加载实例时触发 created : 初始化完成时的事件写在这里，如在这结束loading事件，异步请求也适宜在这里调用 mounted : 挂载元素，获取到DOM节点 updated : 如果对数据统一处理，在这里写上相应函数 beforeDestroy : 可以做一个确认停止事件的确认框 nextTick : 更新数据后立即操作dom
+
+### 5. 生命周期钩子
+
+可以使用的钩子有： `beforeCreate, created, beforeMount, mounted, beforeUpdate, updated, activated, deactivated, beforeDestroy`, `destroyed` 。
+
+
+
+## Vuex
+
+- **Getters** 可以在模板中静态的显示数据。换句话说，getters 可以读取数据，但不能改变状态。
+- **Mutations** 允许更新状态，但永远是同步的。Mutations 是 store 中改变状态数据的唯一方式。
+- **Actions** 允许异步更新状态，但是需要使用一个已经存在的 mutation 。如果你需要以特定的顺序同时执行不同的 mutations 会非常有用。
+
+`store.js`：
+
+```javascript
+export const store = new Vuex.Store({
+  state: {
+    counter: 0
+  },
+  // 展示内容, 无法改变状态
+  getters: {
+    tripleCounter: state => {
+      return state.counter * 3;
+    }
+  },
+  // 改变状态
+  //mutations 永远是同步的
+  mutations: {
+    // 显示传递的载荷 payload, 用 num 表示
+    increment: (state, num) => {
+      state.counter += num;
+    }
+  }, 
+  // 提交 mutation, 这是异步的
+  actions: {
+    // 显示传递的载荷 payload, 用 asynchNum ( 一个对象 )表示
+    asyncDecrement: ({ commit }, asyncNum) => {
+      setTimeout(() => {
+        // asyncNum 对象可以是静态值
+        commit('decrement', asyncNum.by);
+      }, asyncNum.duration);
+    }
+  }
+});
+```
+
+
+
+## 双向数据绑定原理是什么？
 
 ### 基本原理
 
@@ -209,144 +347,6 @@ export default class Vue {
 
 
 
-## Vue通信
-
-### vue父子组件通信
-
-#### 子 -> 父：$emit
-
-```vue
-// 父组件
-<single-address @edit-address="editAddress"></single-address>
-
-// 子组件
-methods: {
- editAddress () {
-  this.$emit('edit-address', false)
- }
-}
-```
-
-#### 父 -> 子：props
-
-```javascript
-// 父组件
-<one-address :addressitems="addressitems"></one-address>
-
-// 子组件
-<div>{{ addressitems.partment }}{{ addressitems.address }}</div>
-export default {
-  props: {
-    addressitems: Object
-  }
-}
-```
-
-### 非父子组件
-
-```javascript
-var bus = new Vue()
-// 触发组件 A 中的事件
-bus.$emit('id-selected', 1)
-// 在组件 B 创建的钩子中监听事件
-bus.$on('id-selected', function (id) {
- console.log(id)
-})
-```
-
-### Vuex
-
-
-
-
-
-## 条件渲染
-
-v-if指令
-
-v-show指令
-
-v-else指令
-
-v-for指令
-
-v-bind指令：给DOM绑定元素属性，语法如下：`v-bind:argument="expression"`
-
-v-on指令
-
-
-
-## 事件处理
-
-Methods 并不是创建自定义函数的唯一方式。
-
-也可以使用 `watch` 。
-
-两者的区别是 methods 适合小的、同步的计算，而 `watch` 对于多任务、异步或者响应数据变化时的开销大的操作是有利的。我经常在动画中使用 watch 。
-
-
-
-## 组件，Props，Slots
-
-从父组件向子组件传递数据的方式称为 **props**。
-
-我们也可以向 props 中添加验证，这和 React 中的 `PropTypes` 类似。
-
-### Slots
-
-重用组件，并用相同的数据或功能填充它们
-
-你也可以使用具名 slot 。如果一个组件中有两个 slot， 可以通过添加 name 属性区分它们
-
-
-
-## 生命周期钩子
-
-可以使用的钩子有： `beforeCreate, created, beforeMount, mounted, beforeUpdate, updated, activated, deactivated, beforeDestroy`, `destroyed` 。
-
-
-
-## Vuex
-
-- **Getters** 可以在模板中静态的显示数据。换句话说，getters 可以读取数据，但不能改变状态。
-- **Mutations** 允许更新状态，但永远是同步的。Mutations 是 store 中改变状态数据的唯一方式。
-- **Actions** 允许异步更新状态，但是需要使用一个已经存在的 mutation 。如果你需要以特定的顺序同时执行不同的 mutations 会非常有用。
-
-`store.js`：
-
-```javascript
-export const store = new Vuex.Store({
-  state: {
-    counter: 0
-  },
-  // 展示内容, 无法改变状态
-  getters: {
-    tripleCounter: state => {
-      return state.counter * 3;
-    }
-  },
-  // 改变状态
-  //mutations 永远是同步的
-  mutations: {
-    // 显示传递的载荷 payload, 用 num 表示
-    increment: (state, num) => {
-      state.counter += num;
-    }
-  }, 
-  // 提交 mutation, 这是异步的
-  actions: {
-    // 显示传递的载荷 payload, 用 asynchNum ( 一个对象 )表示
-    asyncDecrement: ({ commit }, asyncNum) => {
-      setTimeout(() => {
-        // asyncNum 对象可以是静态值
-        commit('decrement', asyncNum.by);
-      }, asyncNum.duration);
-    }
-  }
-});
-```
-
-
 ## Vue2 原理浅谈
 
 - 输入了数据状态，输出视图（我们不关心中间的过程，它们均由框架帮助我们实现）；
@@ -455,21 +455,3 @@ vm.msg = 2; //输出「变了」
 - 其中将virtual dom应用到视图中（这里涉及到diff后文会讲），一定会对其中的表达式求值(比如{{message}},我们肯定会取到它的值再去渲染的），这里会触发到相应的getter操作完成依赖的收集
 - 当数据变化的时候，就会notify到这个组件级别的Watcher,然后它还会去求值，从而重新收集依赖，并且重新渲染视图
 
-
-## vue生命周期
-
-1、什么是vue生命周期？
-答： Vue 实例从创建到销毁的过程，就是生命周期。也就是从开始创建、初始化数据、编译模板、挂载Dom→渲染、更新→渲染、卸载等一系列过程，我们称这是 Vue 的生命周期。2、vue生命周期的作用是什么？
-答：它的生命周期中有多个事件钩子，让我们在控制整个Vue实例的过程时更容易形成好的逻辑。
-
-3、vue生命周期总共有几个阶段？
-答：它可以总共分为8个阶段：创建前/后, 载入前/后,更新前/后,销毁前/销毁后
-
-4、第一次页面加载会触发哪几个钩子？
-答：第一次页面加载时会触发 beforeCreate, created, beforeMount, mounted 这几个钩子
-
-5、DOM 渲染在 哪个周期中就已经完成？
-答：DOM 渲染在 mounted 中就已经完成了。
-
-6、简单描述每个周期具体适合哪些场景？
-答：生命周期钩子的一些使用方法： beforecreate : 可以在这加个loading事件，在加载实例时触发 created : 初始化完成时的事件写在这里，如在这结束loading事件，异步请求也适宜在这里调用 mounted : 挂载元素，获取到DOM节点 updated : 如果对数据统一处理，在这里写上相应函数 beforeDestroy : 可以做一个确认停止事件的确认框 nextTick : 更新数据后立即操作dom
